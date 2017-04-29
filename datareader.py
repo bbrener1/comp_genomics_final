@@ -15,15 +15,15 @@ import matplotlib
 matplotlib.use('agg')
 import matplotlib.pyplot as plt
 
-in_data = open(sys.argv[1])
-
-header = in_data.readline().split()
-
-print header[:28]
-
-counts = np.loadtxt(sys.argv[1], skiprows=1, usecols=np.arange(27,stop=len(header)))
-
-print counts[:5,:5]
+# in_data = open(sys.argv[1])
+#
+# header = in_data.readline().split()
+#
+# print header[:28]
+#
+# counts = np.loadtxt(sys.argv[1], skiprows=1, usecols=np.arange(27,stop=len(header)))
+#
+# print counts[:5,:5]
 
 #
 # nonzero_means = np.zeros(zero_percents.shape[0])
@@ -32,7 +32,11 @@ print counts[:5,:5]
 
 # print pearsonr(zero_percents,nonzero_means)
 
-def impute(counts):
+def impute(counts,passed_txt=None):
+
+    if passed_txt != None:
+        imputed_counts = np.loadtxt(passed_txt)
+        return imputed_counts
 
     imputed_counts = np.zeros(counts.shape)
 
@@ -47,6 +51,8 @@ def impute(counts):
                 print "I = " + str(i)
 
     imputed_counts[imputed_counts==0] = counts[imputed_counts==0]
+
+    np.savetxt("imputed_counts.txt", imputed_counts)
 
     return imputed_counts
 
@@ -107,40 +113,63 @@ def count_PCA(imputed):
     reduced = model.fit_transform(imputed)
 
     plt.figure()
-    plt.bar(model.explained_variance_ratio_)
+    plt.bar(np.arange(model.explained_variance_ratio_.shape[0]),model.explained_variance_ratio_)
     plt.savefig("PCAexplanatorypower.png")
 
     return reduced
 
-def GMM(counts):
+def GMM(counts, pre_solved=None):
+
+    if pre_solved != None:
+        model = GaussianMixture(int(open(pre_solved).readline))
+        model.fit(counts)
+        return model.predict(counts)
+
     param_list = []
     bic_list = []
-    for i in range(50):
+    for i in range(1,50):
         model = GaussianMixture(n_components=i)
         model.fit(counts)
         param_list.append(model.get_params())
         bic_list.append(model.bic(counts))
 
-    return param_list[bic_list.index(max(bic_list))], bic_list.index(max(bic_list))
+    backup = open("params_and_bic.txt",mode='w')
+    print param_list[bic_list.index(min(bic_list))]
+#    backup.write(str(param_list[bic_list.index(max(bic_list))]))
+    backup.write(str(bic_list.index(min(bic_list))))
+    backup.close()
 
-def lasso(counts):
-    network_set = np.zeros((20,counts.shape[1],counts.shape[1]))
-    for i in map(lambda x: float(x)*.01, range(0,100,5)):
-        glasso = GraphLasso()
-        covariance = np.cov(counts)
-        precision = glasso.fit(covariance)
 
+    model = GaussianMixture(n_components=bic_list.index(max(bic_list))+1)
+    model.fit(counts)
+    return model.predict(counts)
+
+
+def lasso(counts, labels):
+    label_net = []
+    for label in range(max(labels.flatten())):
+        network_set = np.zeros((20,counts.shape[1],counts.shape[1]))
+        for i,j in enumerate(map(lambda x: float(x)*.01, range(0,100,5))):
+            glasso = GraphLasso(alpha=j)
+            covariance = np.cov(counts)
+            precision = glasso.fit(counts)
+            network_set[i] = glasso.get_precision()
+        label_net.append(network_set)
+    return label_net
 
 def compare(network1, network2):
-    pass
 
-gold = translate_gold_standard(sys.argv[2],header)
+    print str(np.sum(network1.flatten())) + " edges present in network 1"
+    print str(np.sum(network2.flatten())) + " edges present in network 2"
+    print str(np.logical_and((network1 != 0),(network2 != 0))) + " edges shared between the networks"
 
-translate_gold_standard(sys.argv[2],header[28:])
-
-plt.figure()
-plt.hist(map(lambda x: np.sum(x),gold), bins=20, range=(0,100),log=True)
-plt.savefig("degree_histogram.png")
+# gold = translate_gold_standard(sys.argv[2],header)
+#
+# translate_gold_standard(sys.argv[2],header[28:])
+#
+# plt.figure()
+# plt.hist(map(lambda x: np.sum(x),gold), bins=20, range=(0,100),log=True)
+# plt.savefig("degree_histogram.png")
 
 
 #

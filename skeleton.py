@@ -10,8 +10,7 @@ from sklearn.covariance import GraphLasso
 from scipy.stats import pearsonr
 import pyensembl as en
 
-method_plugin = sys.argv[1]
-from method_plugin import *
+from datareader import *
 
 import matplotlib
 matplotlib.use('agg')
@@ -23,12 +22,16 @@ header = in_data.readline().split()
 
 counts = np.loadtxt(sys.argv[2], skiprows=1, usecols=np.arange(27,stop=len(header)))
 
-imputed = impute(counts)
+imputed = impute(counts,"imputed_counts.txt")
 
 reduced = count_PCA(imputed)
 
 labels = GMM(reduced)
 
-network = lasso(imputed, labels)
+label_net = lasso(imputed, labels)
 
-compare(network,translate_gold_standard(sys.argv[3]))
+gold = translate_gold_standard(sys.argv[3],header)
+for label in label_net:
+    for network in label:
+
+        compare(network,gold)
