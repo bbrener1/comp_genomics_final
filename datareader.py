@@ -121,7 +121,7 @@ def count_PCA(imputed):
 def GMM(counts, pre_solved=None):
 
     if pre_solved != None:
-        model = GaussianMixture(int(open(pre_solved).readline))
+        model = GaussianMixture(int(open(pre_solved).readline())+1)
         model.fit(counts)
         return model.predict(counts)
 
@@ -149,11 +149,14 @@ def lasso(counts, labels):
     label_net = []
     for label in range(max(labels.flatten())):
         network_set = np.zeros((20,counts.shape[1],counts.shape[1]))
-        for i,j in enumerate(map(lambda x: float(x)*.01, range(0,100,5))):
+        for i,j in enumerate(map(lambda x: float(x)*.01, range(1,100,5))):
+            print "test lasso"
             glasso = GraphLasso(alpha=j)
             covariance = np.cov(counts)
             precision = glasso.fit(counts)
             network_set[i] = glasso.get_precision()
+            print i
+            print j
         label_net.append(network_set)
     return label_net
 
