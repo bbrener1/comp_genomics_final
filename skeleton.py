@@ -28,7 +28,7 @@ print counts.shape
 
 imputed = impute(counts,"imputed_counts.txt")
 
-batch_check(imputed, np.loadtxt(sys.argv[2],skiprows=1,usecols=[24]))
+batch_check(imputed, map(lambda x: x.split()[25],open(sys.argv[2]).readlines()[1:]))
 
 # imputed = impute(counts)
 
