@@ -28,6 +28,8 @@ print counts.shape
 
 imputed = impute(counts,"imputed_counts.txt")
 
+batch_check(imputed, np.loadtxt(sys.argv[2],skiprows=1,usecols=[24]))
+
 # imputed = impute(counts)
 
 reduced = count_PCA(imputed)
@@ -39,7 +41,10 @@ labels = GMM(reduced, "params_and_bic.txt")
 label_net = correlation_matrix(imputed, labels, "correlation_matrix.txt")
 
 gold = translate_gold_standard(sys.argv[3],header)
-for label in label_net:
-    for network in label:
+
+for i, label in enumerate(label_net):
+    for j, network in enumerate(label):
+        print "Label " + str(i)
+        print "Network (threshold): " + str(j)
 
         compare(network,gold)
