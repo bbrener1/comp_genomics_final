@@ -36,7 +36,7 @@ labels = GMM(reduced, "params_and_bic.txt")
 
 # labels = GMM(reduced)
 
-label_net = correlation_matrix(imputed, labels)
+label_net = correlation_matrix(imputed, labels, "correlation_matrix.txt")
 
 gold = translate_gold_standard(sys.argv[3],header)
 for label in label_net:
