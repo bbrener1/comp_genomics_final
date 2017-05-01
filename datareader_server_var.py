@@ -12,10 +12,14 @@ from sklearn.decomposition import PCA
 from sklearn.covariance import GraphLassoCV
 from sklearn.preprocessing import scale
 
+
+
 import warnings
 import matplotlib
 matplotlib.use('agg')
 import matplotlib.pyplot as plt
+
+import gseapy
 
 # in_data = open(sys.argv[1])
 #
@@ -115,9 +119,15 @@ def translate_gold_standard(in_data,labels):
             try:
                 network_matrix[labels[27:].index(line.split()[0]),labels[27:].index(line.split()[2])] = 1
             except ValueError:
+                error_count += 1
                 continue
 
     np.savetxt("gold_network.txt",network_matrix)
+
+    print "Gold Standard Debug"
+    print np.sum(network_matrix.flatten())
+    print "GOLD STANDARD ERRORS"
+    print error_count
 
     return network_matrix
 
@@ -141,6 +151,8 @@ def GMM(counts, pre_solved=None):
     if pre_solved != None:
         model = GaussianMixture(int(open(pre_solved).readline())+1)
         model.fit(counts)
+        np.savetxt('gmm_labels.txt',model.predict(counts))
+
         return model.predict(counts)
 
     param_list = []
@@ -164,6 +176,8 @@ def GMM(counts, pre_solved=None):
 
     model = GaussianMixture(n_components=bic_list.index(max(bic_list))+1)
     model.fit(counts)
+    np.savetxt('gmm_labels.txt',model.predict(counts))
+
     return model.predict(counts)
 
 
@@ -185,16 +199,21 @@ def lasso(counts, labels):
     return label_net
 
 
-def correlation_matrix(counts,labels,correlations=None):
+def correlation_matrix(counts,labels,correlation_presolve=None):
     label_net = []
     print "Correlation Debug"
     print counts.shape
+    print set(labels)
 
     label_net = np.zeros((max(labels.flatten())+1,16,counts.shape[1],counts.shape[1]))
 
-    for label, _ in enumerate(label_net):
-        if correlations == None:
+    for label in range(max(labels)+1):
+        print "Label size for label " + str(label)
+        print sum(labels == label)
 
+    for label, _ in enumerate(label_net):
+        if correlation_presolve == None:
+            filter_array = labels == label
             correlations = np.zeros((counts.shape[1],counts.shape[1]))
             print "Correlation dim"
             print correlations.shape
@@ -205,21 +224,23 @@ def correlation_matrix(counts,labels,correlations=None):
 
                     print x
                     print y
-                    correlations[x,y] = pearsonr(counts[:,x],counts[:,y])[0]
+                    correlations[x,y] = pearsonr(counts[filter_array][:,x],counts[filter_array][:,y])[0]
 
             np.savetxt("correlation_matrix.txt",correlations)
 
         else:
-            correlations = np.loadtxt(correlations)
+
+            correlations = np.loadtxt(correlation_presolve)
 
         network_set = np.zeros((16,counts.shape[1],counts.shape[1]))
 
-        for i,j in enumerate(map(lambda x: float(x)*.01, range(20,100,5))):
+        for i,j in enumerate(map(lambda x: float(x)*.01, range(84,100,1))):
             network_set[i] = (correlations > j).astype(dtype=int)
-            # print "test correlation"
+            print "test correlation"
             print i
             print j
-        label_net[label]= network_set
+            print np.sum(network_set[i].flatten())
+        label_net[label] = network_set
 
 
     return label_net
@@ -230,20 +251,53 @@ def batch_check(counts, batch_labels):
     print "Batch Check Debug"
     print counts.shape
     print batch_array.shape
+
+    split = np.random.randint(0,2, size=(counts.shape[0]))
+
+    train_exp = counts[split == 0]
+    train_batch = batch_array[split == 0]
+
+    test_exp = counts[split == 1]
+    test_batch = batch_array[split == 1]
+
     for i in range(len(batch_label_index)):
-        filter_array = (batch_array == i)
+        filter_array = (train_batch == i)
         model = LinearRegression()
-        model.fit(counts, filter_array.astype(dtype=int))
+        model.fit(train_exp, filter_array.astype(dtype=int))
+        print "Batch label index"
+        print i
         print "Batch label"
-        print batch_label
+        print batch_label_index[i]
         print "Score"
-        print model.score(counts, filter_array.astype(dtype=int))
+        print model.score(test_exp, (test_batch == i).astype(dtype=int))
 
 def compare(network1, network2):
 
     print str(np.sum((network1 != 0).flatten())) + " edges present in network 1"
+    print str(np.sum((network1 != 0).flatten())/(network1.shape[0]*network1.shape[1])) + " percent of all possible edges"
     print str(np.sum((network2 != 0).flatten())) + " edges present in network 2"
-    print str(np.sum(np.logical_and((network1 != 0),(network2 != 0))).flatten()) + " edges shared between the networks"
+    print str(np.sum((network2 != 0).flatten())/(network2.shape[0]*network2.shape[1])) + " percent of all possible edges"
+    print str(np.sum(np.logical_and((network1 != 0),(network2 != 0)).flatten())) + " edges shared between the networks"
+    print str( np.sum(np.logical_and((network1 != 0),(network2 != 0)).flatten()) / np.sum((network2 != 0).flatten())) + " percent of net2 edges"
+
+def gseapy_analysis(network,header):
+    top_20 = network[np.argsort(np.sum(network, axis=1)) > network.shape[1]-20]
+    "GSEAPY DEBUG"
+    print top_20.shape
+    for gene in top_20:
+        gene_list = []
+        for j, edge in enumerate(gene):
+            if header[i] != "error":
+                gene_list.append(header[j])
+        gseapy.enrichr(gene_list=gene_list, description='pathway', gene_sets='KEGG_2016', outdir='test')
+
+
+        # gene_list = []
+        # for i, edge in enumerate(gene):
+        #     if edge > 0:
+        #         gene_list.append(header[i])
+
+
 
 # gold = translate_gold_standard(sys.argv[2],header)
 #
