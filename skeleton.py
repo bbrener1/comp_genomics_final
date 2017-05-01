@@ -11,6 +11,7 @@ from scipy.stats import pearsonr
 # import pyensembl as en
 
 from datareader_server_var import *
+from impute import *
 
 import matplotlib
 matplotlib.use('agg')
@@ -26,7 +27,8 @@ counts = np.loadtxt(sys.argv[2], skiprows=1, usecols=np.arange(27,stop=len(heade
 print "Samples, Features"
 print counts.shape
 
-imputed = impute(counts,"imputed_counts.txt")
+# imputed = impute(counts,"imputed_counts.txt")
+imputed = test_and_impute(counts)
 
 batch_check(imputed, map(lambda x: x.split()[25],open(sys.argv[2]).readlines()[1:]))
 

@@ -4,18 +4,18 @@ from sklearn import preprocessing
 from fancyimpute import BiScaler, KNN, NuclearNormMinimization, SoftImpute, MICE, IterativeSVD
 
 
-def get_data():
-    data_file = open('data.txt', 'r')
-    data_file.readline()
-    line = data_file.readline()
-    feature_matrix = []
-    while line:
-        feature_matrix.append(line.strip().split()[27:])
-        line = data_file.readline()
-    data_file.close()
-    feature_matrix = np.asarray(feature_matrix, dtype=np.float64)
-    data_file.close()
-    return feature_matrix
+# def get_data():
+#     data_file = open('data.txt', 'r')
+#     data_file.readline()
+#     line = data_file.readline()
+#     feature_matrix = []
+#     while line:
+#         feature_matrix.append(line.strip().split()[27:])
+#         line = data_file.readline()
+#     data_file.close()
+#     feature_matrix = np.asarray(feature_matrix, dtype=np.float64)
+#     data_file.close()
+#     return feature_matrix
 
 
 def count_missing(feature_matrix, value=0):
@@ -100,35 +100,29 @@ def impute(feature_matrix, method='All'):
     feature_matrix[feature_matrix == 0] = np.NaN
     # imputer = preprocessing.Imputer(missing_values=0, strategy='mean')
     if method == 'All':
-        feature_matrix_knn = KNN(k=5).complete(feature_matrix)
-        feature_matrix_nnm = NuclearNormMinimization().complete(feature_matrix)
-        feature_matrix_soft = SoftImpute().complete(BiScaler().fit_transform(feature_matrix))
-        feature_matrix_mice = MICE().complete(feature_matrix)
-        feature_matrix_isvd = IterativeSVD().complete(feature_matrix)
+        feature_matrix_knn = KNN(k=5, verbose=False).complete(feature_matrix)
+        feature_matrix_nnm = NuclearNormMinimization(verbose=False).complete(feature_matrix)
+        feature_matrix_soft = SoftImpute().complete(BiScaler(verbose=False).fit_transform(feature_matrix))
+        feature_matrix_mice = MICE(verbose=False).complete(feature_matrix)
+        feature_matrix_isvd = IterativeSVD(verbose=False).complete(feature_matrix)
         return (feature_matrix_knn, 'KNN'), (feature_matrix_nnm, 'NNM'), (feature_matrix_soft, 'SoftImpute'), \
                (feature_matrix_mice, 'MICE'), (feature_matrix_isvd, 'Iterative SVD')
     else:
         if method == 'Iterative SVD':
-            return IterativeSVD().complete(feature_matrix)
+            return IterativeSVD(verbose=False).complete(feature_matrix)
         elif method == 'NNM':
-            return NuclearNormMinimization().complete(feature_matrix)
+            return NuclearNormMinimization(verbose=False).complete(feature_matrix)
         elif method == 'SoftImpute':
-            return SoftImpute().complete(BiScaler().fit_transform(feature_matrix))
+            return SoftImpute(verbose=False).complete(BiScaler().fit_transform(feature_matrix))
         elif method == 'MICE':
-            return MICE().complete(feature_matrix)
+            return MICE(verbose=False).complete(feature_matrix)
         else:
-            return KNN(k=10).complete(feature_matrix)
+            return KNN(k=10, verbose=False).complete(feature_matrix)
     # feature_matrix_biscalar = BiScaler().fit_transform()
     # feature_matrix_sk = imputer.fit_transform(feature_matrix)
 
 
-#
-# def gmm(feature_matrix):
-#
-
-
-def main():
-    feature_matrix = get_data()
+def test_and_impute(feature_matrix):
     synth_data = create_synth(feature_matrix)
     synth_file = open('synthetic_data.txt', 'w')
     np.savetxt(synth_file, synth_data, delimiter=' ')
@@ -143,7 +137,7 @@ def main():
     impute_score_list = []
     for i in imputed_datasets:
         if i[1] == 'SoftImpute':
-            temp_score = impute_error(BiScaler().fit_transform(synth_data), i[0])
+            temp_score = impute_error(BiScaler(verbose=False).fit_transform(synth_data), i[0])
         else:
             temp_score = impute_error(synth_data, i[0])
         impute_score_list.append((temp_score, i[1]))
@@ -157,7 +151,4 @@ def main():
     data_file = open('data_imputed.txt', 'w')
     np.savetxt(data_file, feature_matrix_imputed, delimiter=' ')
     data_file.close()
-
-
-if __name__ == '__main__':
-    main()
+    return feature_matrix_imputed
