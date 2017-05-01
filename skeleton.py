@@ -28,7 +28,7 @@ print counts.shape
 
 imputed = impute(counts,"imputed_counts.txt")
 
-batch_check(imputed, map(lambda x: x.split()[25],open(sys.argv[2]).readlines()[1:]))
+# batch_check(imputed, map(lambda x: x.split()[25],open(sys.argv[2]).readlines()[1:]))
 
 # imputed = impute(counts)
 
@@ -38,7 +38,9 @@ labels = GMM(reduced, "params_and_bic.txt")
 
 # labels = GMM(reduced)
 
-label_net = correlation_matrix(imputed, labels, "correlation_matrix.txt")
+# label_net = correlation_matrix(imputed, labels, "correlation_matrix.txt")
+
+label_net = correlation_matrix(imputed, labels)
 
 gold = translate_gold_standard(sys.argv[3],header)
 
