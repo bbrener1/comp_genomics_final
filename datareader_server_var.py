@@ -272,7 +272,7 @@ def batch_check(counts, batch_labels):
         print "Score"
         print model.score(test_exp, (test_batch == i).astype(dtype=int))
 
-def compare(networks):
+def compare_multiple(networks):
 
     for i, network in enumerate(networks):
         print str(np.sum((network != 0).flatten())) + " edges present in network " + str(i)
@@ -311,6 +311,38 @@ def gseapy_analysis(network,header):
         #     if edge > 0:
         #         gene_list.append(header[i])
 
+
+def find_similar_genes(imputed,labels,label_net):
+    similar_genes = np.zeros(imputed.shape[0],dtype=bool)
+
+    sub_pop_counts = np.zeros((len(similar_genes),len(labels.shape[0])))
+    for i in range(len(labels)):
+        sub_pop_counts[:,i] = (np.mean(imputed[labels == i],axis=0))
+    # print "Sub pop counts"
+    # print sub_pop_counts.shape
+    # print sub_pop_counts[:5,:3]
+
+    for i in range(len(similar_genes)):
+        # print sub_pop_counts[i,:3]
+        # print np.std(sub_pop_counts[i,:3])
+        # print (np.mean(sub_pop_counts[i,:3])*.2)
+        if np.std(sub_pop_counts[i,:3]) < (np.mean(sub_pop_counts[i,:3])*.2):
+            similar_genes[i] = True
+
+    # print similar_genes
+    # print np.sum(similar_genes)
+
+    similar_gene_net = label_net[:,:,:,similar_genes]
+    similar_gene_net = similar_gene_net[:,:,similar_genes,:]
+
+    print similar_gene_net.shape
+
+
+def compare(network1, network2, output):
+
+    output.write(str(np.sum((network1 != 0).flatten())) + " edges present in network 1")
+    output.write(str(np.sum((network2 != 0).flatten())) + " edges present in network 2")
+    output.write(str(np.sum(np.logical_and((network1 != 0),(network2 != 0))).flatten()) + " edges shared between the networks")
 
 # gold = translate_gold_standard(sys.argv[2],header)
 #

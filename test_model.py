@@ -17,7 +17,13 @@ import matplotlib
 matplotlib.use('agg')
 import matplotlib.pyplot as plt
 
+imputed = np.loadtxt('data_imputed.txt', dtype=np.float64)
+
 header = np.loadtxt('header.txt').tolist()
+
+labels = np.load('gmm_labels')
+
+random_labels = np.load('random_labels')
 
 gold = translate_gold_standard(sys.argv[1], header)
 
@@ -33,25 +39,45 @@ output1.write("For comparison using Correlation Matrix:")
 for i, label in enumerate(correlation_label_net):
     for j, network in enumerate(label):
         output1.write("Label " + str(i))
-        output1.write("Network (threshold): " + str(j))
+        output1.write("Network (threshold): " + str(float(j)*.01 + .8))
         compare(network, gold, output1)
 
-output2.write("For comparison using Graphical Lasso Network:")
-for i, label in enumerate(glasso_label_net):
-    for j, network in enumerate(label):
-        output2.write("Label " + str(i))
-        output2.write("Network (threshold): " + str(j))
-        compare(network, gold, output2)
+output1.write("Internal comparisons of inter-label network similarity given a series of thresholds:")
+
+for i in range(correlation_label_net.shape[1]):
+    output1.write("Network (threshold) " + str(float(i)*.01+.8))
+    compare_multiple(map(lambda x: x,correlation_label_net[:,i,:,:]))
+
+output1.write("Internal comparisons of inter-label networks, but including only genes of similar mean expression:")
+
+similar_gene_net = find_similar_genes(imputed,labels,correlation_label_net)
+for i in range(label_net.shape[1]):
+    compare_multiple(map(lambda x: x,similar_gene_net[:,i,:,:]))
+
+
+#
+# output2.write("For comparison using Graphical Lasso Network:")
+# for i, label in enumerate(glasso_label_net):
+#     for j, network in enumerate(label):
+#         output2.write("Label " + str(i))
+#         output2.write("Network (threshold): " + str(j))
+#         compare(network, gold, output2)
 
 correlation_label_net = np.load('random_correlation_network.npy')
 glasso_label_net = np.load('random_glasso_network.npy')
 
-output3.write("For comparison using Correlation Matrix with random labels:")
-for i, label in enumerate(correlation_label_net):
-    for j, network in enumerate(label):
-        output3.write("Label " + str(i))
-        output3.write("Network (threshold): " + str(j))
-        compare(network, gold, output3)
+output3.write("For inter-label network comparison using Correlation Matrix with random labels:")
+
+for i in range(correlation_label_net.shape[1]):
+    output1.write("Network (threshold) " + str(float(i)*.01+.8))
+    compare_multiple(map(lambda x: x,correlation_label_net[:,i,:,:]))
+
+
+# for i, label in enumerate(correlation_label_net):
+#     for j, network in enumerate(label):
+#         output3.write("Label " + str(i))
+#         output3.write("Network (threshold): " + str(j))
+#         compare(network, gold, output3)
 
 
 output4.write("For comparison using Graphical Lasso Network with random labels:")
