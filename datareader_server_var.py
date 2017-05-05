@@ -167,7 +167,7 @@ def GMM(counts, pre_solved=None):
 
     param_list = []
     bic_list = []
-    for i in range(1,20):
+    for i in range(1, 20):
         model = GaussianMixture(n_components=i)
         model.fit(counts)
         param_list.append(model.get_params())
@@ -231,7 +231,7 @@ def correlation_matrix(counts,labels,correlation_presolve=None):
             correlations = np.zeros((counts[filter_array].shape[1],counts[filter_array].shape[1]))
             print "Correlation dim"
             print correlations.shape
-            correlations = np.corrcoef(counts[filter_array].T).T
+            correlations = np.abs(np.corrcoef(counts[filter_array].T).T)
 
         network_set = np.zeros((16,counts.shape[1],counts.shape[1]))
 
@@ -310,7 +310,6 @@ def gseapy_analysis(network,header):
         # for i, edge in enumerate(gene):
         #     if edge > 0:
         #         gene_list.append(header[i])
-
 
 
 # gold = translate_gold_standard(sys.argv[2],header)

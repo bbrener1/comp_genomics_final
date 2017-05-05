@@ -11,6 +11,7 @@ from scipy.stats import pearsonr
 # import pyensembl as en
 
 from datareader_server_var import *
+from impute import *
 
 import matplotlib
 matplotlib.use('agg')
@@ -20,15 +21,16 @@ in_data = open(sys.argv[2])
 
 header = in_data.readline().split()
 
-counts = np.loadtxt(sys.argv[2], skiprows=1, usecols=np.arange(27,stop=len(header)))
+counts = np.loadtxt(sys.argv[2], skiprows=1, usecols=np.arange(27, stop=len(header)))
 
 
 print "Samples, Features"
 print counts.shape
 
-imputed = impute(counts,"imputed_counts.txt")
+imputed = test_and_impute(counts)
 
-# imputed = impute(counts)
+batch_check(imputed, map(lambda x: x.split()[25], open(sys.argv[2]).readlines()[1:]))
+
 
 in_data.seek(0)
 in_data_list = in_data.readlines()[1:]
@@ -49,7 +51,7 @@ labels = GMM(reduced, "params_and_bic.txt")
 #
 label_net = correlation_matrix(imputed, labels)
 
-gold = translate_gold_standard(sys.argv[3],header)
+gold = translate_gold_standard(sys.argv[3], header)
 
 print "correlation_matrix debug"
 print label_net.shape
@@ -91,5 +93,3 @@ print similar_gene_net.shape
 
 for i in range(label_net.shape[1]):
     compare(map(lambda x: x,similar_gene_net[:,i,:,:]))
-
-gseapy_analysis(label_net[1,12], header)
