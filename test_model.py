@@ -17,7 +17,8 @@ import matplotlib
 matplotlib.use('agg')
 import matplotlib.pyplot as plt
 
-imputed = np.loadtxt('data_imputed.txt', dtype=np.float64)
+# imputed = np.loadtxt('data_imputed.txt', dtype=np.float64)
+imputed = np.loadtxt('imputed_counts.txt', dtype=np.float64)
 
 header = np.loadtxt('header.txt').tolist()
 
