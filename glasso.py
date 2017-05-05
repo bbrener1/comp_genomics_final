@@ -67,19 +67,17 @@ def graph_lasso(counts, labels):
     return four_D_matrix
 
 
-def main():
-    data_file = open('data_imputed.txt', 'r')
-    feature_matrix = np.loadtxt(data_file, delimiter=' ', dtype=np.float64)
-    model = preprocessing.StandardScaler()
-    feature_matrix = model.fit_transform(feature_matrix)
-    labels = []
-    labels_file = open('gmm_labels.txt', 'r')
-    labels_line = labels_file.readline().strip()
-    while labels_line:
-        labels.append(int(labels_line.split('.')[0]))
-        labels_line = labels_file.readline().strip()
+def glasso_net(feature_matrix, labels):
+    # data_file = open('data_imputed.txt', 'r')
+    # feature_matrix = np.loadtxt(data_file, delimiter=' ', dtype=np.float64)
+    # model = preprocessing.StandardScaler()
+    # feature_matrix = model.fit_transform(feature_matrix)
+    # labels = []
+    # labels_file = open('gmm_labels.txt', 'r')
+    # labels_line = labels_file.readline().strip()
+    # while labels_line:
+    #     labels.append(int(labels_line.split('.')[0]))
+    #     labels_line = labels_file.readline().strip()
     fourdmatrix = graph_lasso(feature_matrix, labels)
-    np.save('membership.npy', fourdmatrix, allow_pickle=True)
+    return fourdmatrix
 
-if __name__ == "__main__":
-    main()

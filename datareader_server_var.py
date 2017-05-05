@@ -145,7 +145,7 @@ def GMM(counts, pre_solved=None):
 
     param_list = []
     bic_list = []
-    for i in range(1,20):
+    for i in range(1, 20):
         model = GaussianMixture(n_components=i)
         model.fit(counts)
         param_list.append(model.get_params())
@@ -235,15 +235,16 @@ def batch_check(counts, batch_labels):
         model = LinearRegression()
         model.fit(counts, filter_array.astype(dtype=int))
         print "Batch label"
-        print batch_label
+        print batch_labels
         print "Score"
         print model.score(counts, filter_array.astype(dtype=int))
 
-def compare(network1, network2):
 
-    print str(np.sum((network1 != 0).flatten())) + " edges present in network 1"
-    print str(np.sum((network2 != 0).flatten())) + " edges present in network 2"
-    print str(np.sum(np.logical_and((network1 != 0),(network2 != 0))).flatten()) + " edges shared between the networks"
+def compare(network1, network2, output):
+
+    output.write(str(np.sum((network1 != 0).flatten())) + " edges present in network 1")
+    output.write(str(np.sum((network2 != 0).flatten())) + " edges present in network 2")
+    output.write(str(np.sum(np.logical_and((network1 != 0),(network2 != 0))).flatten()) + " edges shared between the networks")
 
 # gold = translate_gold_standard(sys.argv[2],header)
 #
