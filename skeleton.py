@@ -45,16 +45,15 @@ labels = GMM(reduced, "params_and_bic.txt")
 
 # labels = GMM(reduced)
 
-label_net = correlation_matrix(imputed, labels, correlation_presolve = "correlation_matrix.txt")
+# label_net = correlation_matrix(imputed, labels, correlation_presolve = "correlation_matrix.txt")
 #
-# label_net = correlation_matrix(imputed, labels)
+label_net = correlation_matrix(imputed, labels)
 
 gold = translate_gold_standard(sys.argv[3],header)
 
 print "correlation_matrix debug"
 print label_net.shape
 
-gseapy_analysis(label_net[1,12], header)
 
 # for i, label in enumerate(label_net[:-1]):
 #     for j, network in enumerate(label):
@@ -63,12 +62,34 @@ gseapy_analysis(label_net[1,12], header)
 #
 #
 #
-# for i, label in enumerate(label_net):
-#     for j, network in enumerate(label):
-#         print "Label " + str(i)
-#         print "Network (threshold): " + str(j)
-#         print network.shape
-#         print i
-#         print j
-#
-#         compare(network,gold)
+for i in range(label_net.shape[1]):
+    compare(map(lambda x: x,label_net[:,i,:,:]))
+
+similar_genes = np.zeros(counts.shape[1],dtype=bool)
+
+sub_pop_counts = np.zeros((len(similar_genes),len(labels)))
+for i in range(len(labels)):
+    sub_pop_counts[:,i] = (np.mean(imputed[labels == i],axis=0))
+print "Sub pop counts"
+print sub_pop_counts.shape
+print sub_pop_counts[:5,:3]
+
+for i in range(len(similar_genes)):
+    print sub_pop_counts[i,:3]
+    print np.std(sub_pop_counts[i,:3])
+    print (np.mean(sub_pop_counts[i,:3])*.2)
+    if np.std(sub_pop_counts[i,:3]) < (np.mean(sub_pop_counts[i,:3])*.2):
+        similar_genes[i] = True
+
+print similar_genes
+print np.sum(similar_genes)
+
+similar_gene_net = label_net[:,:,:,similar_genes]
+similar_gene_net = similar_gene_net[:,:,similar_genes,:]
+
+print similar_gene_net.shape
+
+for i in range(label_net.shape[1]):
+    compare(map(lambda x: x,similar_gene_net[:,i,:,:]))
+
+gseapy_analysis(label_net[1,12], header)

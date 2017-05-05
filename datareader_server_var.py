@@ -119,7 +119,17 @@ def translate_gold_standard(in_data,labels):
             try:
                 network_matrix[labels[27:].index(line.split()[0]),labels[27:].index(line.split()[2])] = 1
             except ValueError:
-                error_count += 1
+                # print "GOLD ERROR"
+                # print line
+                # try:
+                #     labels[27:].index(line.split()[0])
+                # except ValueError:
+                #     print "Couldn't find " + line.split()[0]
+                # try:
+                #     labels[27:].index(line.split()[2])
+                # except ValueError:
+                #     print "Couldn't find " + line.split()[2]
+                # # error_count += 1
                 continue
 
     np.savetxt("gold_network.txt",network_matrix)
@@ -180,6 +190,10 @@ def GMM(counts, pre_solved=None):
 
     return model.predict(counts)
 
+# def agglomerative(counts, pre_solved = None):
+#     if presolved != None:
+#         pass
+
 
 def lasso(counts, labels):
     label_net = []
@@ -214,23 +228,10 @@ def correlation_matrix(counts,labels,correlation_presolve=None):
     for label, _ in enumerate(label_net):
         if correlation_presolve == None:
             filter_array = labels == label
-            correlations = np.zeros((counts.shape[1],counts.shape[1]))
+            correlations = np.zeros((counts[filter_array].shape[1],counts[filter_array].shape[1]))
             print "Correlation dim"
             print correlations.shape
-            for x in range(counts.shape[1]):
-                for y in range(counts.shape[1]):
-                    # print "test iteration"
-                    # print counts.shape
-
-                    print x
-                    print y
-                    correlations[x,y] = pearsonr(counts[filter_array][:,x],counts[filter_array][:,y])[0]
-
-            np.savetxt("correlation_matrix.txt",correlations)
-
-        else:
-
-            correlations = np.loadtxt(correlation_presolve)
+            correlations = np.corrcoef(counts[filter_array].T).T
 
         network_set = np.zeros((16,counts.shape[1],counts.shape[1]))
 
@@ -271,25 +272,38 @@ def batch_check(counts, batch_labels):
         print "Score"
         print model.score(test_exp, (test_batch == i).astype(dtype=int))
 
-def compare(network1, network2):
+def compare(networks):
 
-    print str(np.sum((network1 != 0).flatten())) + " edges present in network 1"
-    print str(np.sum((network1 != 0).flatten())/(network1.shape[0]*network1.shape[1])) + " percent of all possible edges"
-    print str(np.sum((network2 != 0).flatten())) + " edges present in network 2"
-    print str(np.sum((network2 != 0).flatten())/(network2.shape[0]*network2.shape[1])) + " percent of all possible edges"
-    print str(np.sum(np.logical_and((network1 != 0),(network2 != 0)).flatten())) + " edges shared between the networks"
-    print str( np.sum(np.logical_and((network1 != 0),(network2 != 0)).flatten()) / np.sum((network2 != 0).flatten())) + " percent of net2 edges"
+    for i, network in enumerate(networks):
+        print str(np.sum((network != 0).flatten())) + " edges present in network " + str(i)
+        print str(np.sum((network != 0).flatten())/(network.shape[0]*network.shape[1])) + " percent of all possible edges"
+    # print str(np.sum((network2 != 0).flatten())) + " edges present in network 2"
+    # print str(np.sum((network2 != 0).flatten())/(network2.shape[0]*network2.shape[1])) + " percent of all possible edges"
+    shared_net = np.ones(networks[0].shape)
+    for i, network in enumerate(networks):
+        shared_net = np.logical_and(shared_net,network)
+
+    print "There are " + str(np.sum(shared_net.flatten())) + " universal edges"
+    for i, network in enumerate(networks):
+        print str(float(np.sum((shared_net != 0).flatten()))/(float(np.sum(network.flatten())))) + " percent of network " + str(i) + " is shared."
+
+
 
 def gseapy_analysis(network,header):
-    top_20 = network[np.argsort(np.sum(network, axis=1)) > network.shape[1]-20]
+    top_20 = network.T[np.argsort(np.sum(network, axis=1)) > network.shape[1]-20]
+    top_20_indecies = np.arange(network.shape[1])[np.argsort(np.sum(network, axis=1)) > network.shape[1]-20]
     "GSEAPY DEBUG"
     print top_20.shape
+    print np.sum(top_20)
     for gene in top_20:
-        gene_list = []
+        genes = []
         for j, edge in enumerate(gene):
-            if header[i] != "error":
-                gene_list.append(header[j])
-        gseapy.enrichr(gene_list=gene_list, description='pathway', gene_sets='KEGG_2016', outdir='test')
+            if header[j] != "error" and edge > 0:
+                genes.append(header[j])
+
+        print genes
+        print len(genes)
+        gseapy.enrichr(gene_list=genes, description='pathway', gene_sets='KEGG_2016', outdir='test')
 
 
         # gene_list = []
